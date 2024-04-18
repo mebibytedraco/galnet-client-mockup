@@ -1,7 +1,7 @@
 OBJS = \
 	  main.o \
 
-LDLIBS = -lncurses
+LDLIBS = -lncursesw
 
 all: client-mockup
 
