@@ -10,6 +10,9 @@
 #define COLPAIR_UL_SYMBOL 2
 #define COLPAIR_SERVER_INFO 3
 #define COLPAIR_MSG_BG 4
+#define COLPAIR_SERVER_INFO_ONLINE 5
+#define COLPAIR_SERVER_INFO_OFFLINE 6
+#define COLPAIR_SERVER_INFO_NUM 7
 
 int main(void) {
 	setlocale(LC_ALL, ""); // Enables UTF-8
@@ -23,6 +26,9 @@ int main(void) {
 	init_pair(COLPAIR_UL_SYMBOL, COLOR_MAGENTA, COLOR_BLUE);
 	init_pair(COLPAIR_SERVER_INFO, -1, COLOR_MAGENTA);
 	init_pair(COLPAIR_MSG_BG, COLOR_WHITE, -1);
+	init_pair(COLPAIR_SERVER_INFO_ONLINE, COLOR_GREEN, COLOR_MAGENTA);
+	init_pair(COLPAIR_SERVER_INFO_OFFLINE, COLOR_WHITE, COLOR_MAGENTA);
+	init_pair(COLPAIR_SERVER_INFO_NUM, COLOR_WHITE, COLOR_MAGENTA);
 
 	curs_set(0); // Hide the cursor
 
@@ -41,6 +47,14 @@ int main(void) {
 	}
 	mvwaddstr(server_info_win, 0, (CHANNELS_PANE_WIDTH - 11) / 2,
 			"Test Server");
+	mvwaddch(server_info_win, 1, 3,
+			ACS_DIAMOND | COLOR_PAIR(COLPAIR_SERVER_INFO_ONLINE));
+	wcolor_set(server_info_win, COLPAIR_SERVER_INFO_NUM, NULL);
+	wprintw(server_info_win, "%d", 42);
+	mvwaddch(server_info_win, 1, 9,
+			ACS_DIAMOND | COLOR_PAIR(COLPAIR_SERVER_INFO_OFFLINE));
+	wprintw(server_info_win, "%d", 69);
+	wcolor_set(server_info_win, COLPAIR_SERVER_INFO, NULL);
 
 	// Set up message area
 	WINDOW *msg_win = newwin(max_y - 4, MSG_AREA_WIDTH, 2,
