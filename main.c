@@ -62,7 +62,7 @@ int main(void) {
 	for (int i = 0; i < max_y - 4; i++) {
 		wmove(msg_win, i, 0);
 		for (int j = 0; j < MSG_AREA_WIDTH; j++) {
-			waddch(msg_win, '\'' | COLOR_PAIR(COLPAIR_MSG_BG));
+			waddch(msg_win, '`' | COLOR_PAIR(COLPAIR_MSG_BG));
 		}
 	}
 
