@@ -48,7 +48,8 @@ int main(void) {
 	mvwaddstr(server_info_win, 0, (CHANNELS_PANE_WIDTH - 11) / 2,
 			"Test Server");
 	mvwaddch(server_info_win, 1, 3,
-			ACS_DIAMOND | COLOR_PAIR(COLPAIR_SERVER_INFO_ONLINE));
+			ACS_DIAMOND | COLOR_PAIR(COLPAIR_SERVER_INFO_ONLINE)
+			| A_BOLD);
 	wcolor_set(server_info_win, COLPAIR_SERVER_INFO_NUM, NULL);
 	wprintw(server_info_win, "%d", 42);
 	mvwaddch(server_info_win, 1, 9,
