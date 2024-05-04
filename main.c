@@ -88,9 +88,10 @@ void server_info_draw(void) {
 	// Write number of online users
 	try_color_set(server_info_win, COLPAIR_SERVER_INFO_NUM, NULL);
 	wprintw(server_info_win, "%d", 42);
-	// Draw icon for offline users
-	mvwaddch(server_info_win, 1, 9, ACS_DIAMOND
-			| TRY_COLPAIR(COLPAIR_SERVER_INFO_OFFLINE));
+	// Draw icon for offline users (inverted if color is not enabled)
+	chtype offline_icon_attr = term_props.color
+		? TRY_COLPAIR(COLPAIR_SERVER_INFO_OFFLINE) : A_REVERSE;
+	mvwaddch(server_info_win, 1, 9, ACS_DIAMOND | offline_icon_attr);
 	// Write number of offline users
 	wprintw(server_info_win, "%d", 69);
 	// Reset color to normal for server info
