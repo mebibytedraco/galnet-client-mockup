@@ -17,6 +17,8 @@ enum {
 	COLPAIR_SERVER_INFO_ONLINE,
 	COLPAIR_SERVER_INFO_OFFLINE,
 	COLPAIR_SERVER_INFO_NUM,
+	COLPAIR_STATUS_BOX,
+	COLPAIR_STATUS_BOX_ICON,
 };
 
 struct {
@@ -25,7 +27,7 @@ struct {
 	bool utf_8;
 } term_props;
 
-WINDOW *server_info_win, *msg_win, *channel_win;
+WINDOW *msg_win, *server_info_win, *channel_win, *status_win;
 
 struct channel {
 	char *name;
@@ -115,6 +117,10 @@ void setup_color(void) {
 			COLOR_WHITE, COLOR_MAGENTA);
 		init_pair(COLPAIR_SERVER_INFO_NUM,
 			COLOR_WHITE, COLOR_MAGENTA);
+		init_pair(COLPAIR_STATUS_BOX,
+			-1, -1);
+		init_pair(COLPAIR_STATUS_BOX_ICON,
+			COLOR_GREEN, -1);
 	} else {
 		term_props.color = false;
 	}
@@ -227,17 +233,46 @@ void channel_list_draw(void) {
 	}
 }
 
+void status_box_draw(void) {
+	status_win = newwin(BOTTOM_HEIGHT, LEFT_WIDTH,
+		term_props.height - BOTTOM_HEIGHT, 0);
+	// Fill background of box
+	wmove(status_win, 0, 0);
+	for (int i = 0; i < BOTTOM_HEIGHT; i++) {
+		for (int j = 0; j < LEFT_WIDTH; j++) {
+			waddch(status_win, ACS_CKBOARD);
+		}
+	}
+	// Draw top half of status icon
+	try_color_set(status_win, COLPAIR_STATUS_BOX, NULL);
+	mvwaddch(status_win, 0, 0, ACS_ULCORNER | A_BOLD
+		| TRY_COLPAIR(COLPAIR_STATUS_BOX_ICON));
+	waddch(status_win, ACS_URCORNER | A_BOLD
+		| TRY_COLPAIR(COLPAIR_STATUS_BOX_ICON));
+	// Display username
+	waddstr(status_win, "Zenith#0302");
+	// Draw bottom half of status icon
+	mvwaddch(status_win, 1, 0, ACS_LLCORNER | A_BOLD
+		| TRY_COLPAIR(COLPAIR_STATUS_BOX_ICON));
+	waddch(status_win, ACS_LRCORNER | A_BOLD
+		| TRY_COLPAIR(COLPAIR_STATUS_BOX_ICON));
+	// Display status
+	waddstr(status_win, "Status lol");
+}
+
 int main(void) {
 	setup_term();
 
 	server_info_draw();
 	channel_list_draw();
+	status_box_draw();
 	msg_area_draw();
 
 	// Refresh everything
 	refresh();
 	wrefresh(server_info_win);
 	wrefresh(channel_win);
+	wrefresh(status_win);
 	wrefresh(msg_win);
 
 	getch(); // Wait for user input to terminate
