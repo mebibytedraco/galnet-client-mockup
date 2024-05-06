@@ -34,8 +34,8 @@ struct {
 	bool utf_8;
 } term_props;
 
-WINDOW *msg_win, *scroll_bar_win, *server_info_win, *channel_win, *status_win,
-       *tab_win;
+WINDOW *msg_area_win, *scroll_bar_win, *server_info_win, *channel_win,
+       *status_win, *tab_win, *msg_box_win, *search_box_win;
 
 struct channel {
 	char *name;
@@ -313,26 +313,26 @@ void tab_bar_draw(void) {
 }
 
 void msg_area_draw(void) {
-	msg_win = newwin(MSG_AREA_HEIGHT, MSG_AREA_WIDTH,
+	msg_area_win = newwin(MSG_AREA_HEIGHT, MSG_AREA_WIDTH,
 		TOP_HEIGHT, LEFT_WIDTH);
 	// Fill the background of the message area
 	const chtype msg_bg_char = '`' | TRY_COLPAIR(COLPAIR_MSG_BG);
 	for (int i = 0; i < MSG_AREA_HEIGHT; i++) {
-		wmove(msg_win, i, 0);
+		wmove(msg_area_win, i, 0);
 		for (int j = 0; j < MSG_AREA_WIDTH; j++) {
-			waddch(msg_win, msg_bg_char);
+			waddch(msg_area_win, msg_bg_char);
 		}
 	}
 	// Write a test message
 	const char *test_username = "Zenith";
 	const char *test_msg = "lol imagine progress happening";
-	try_color_set(msg_win, COLPAIR_TEST_USERNAME, NULL);
-	wattron(msg_win, A_BOLD);
-	mvwaddstr(msg_win, MSG_AREA_HEIGHT - 1, 0, test_username);
-	waddstr(msg_win, ": ");
-	try_color_set(msg_win, COLPAIR_DEFAULT, NULL);
-	wattroff(msg_win, A_BOLD);
-	waddstr(msg_win, test_msg);
+	try_color_set(msg_area_win, COLPAIR_TEST_USERNAME, NULL);
+	wattron(msg_area_win, A_BOLD);
+	mvwaddstr(msg_area_win, MSG_AREA_HEIGHT - 1, 0, test_username);
+	waddstr(msg_area_win, ": ");
+	try_color_set(msg_area_win, COLPAIR_DEFAULT, NULL);
+	wattroff(msg_area_win, A_BOLD);
+	waddstr(msg_area_win, test_msg);
 }
 
 void scroll_bar_draw(void) {
@@ -349,6 +349,58 @@ void scroll_bar_draw(void) {
 	}
 }
 
+void msg_box_draw(void) {
+	msg_box_win = newwin(BOTTOM_HEIGHT, CENTER_WIDTH,
+		term_props.height - BOTTOM_HEIGHT, LEFT_WIDTH);
+	// Draw first line
+	waddch(msg_box_win, ACS_LTEE);
+	waddstr(msg_box_win, "Message...");
+	int y, x;
+	getyx(msg_box_win, y, x);
+	for (int i = x; i < CENTER_WIDTH - 1; i++) {
+		waddch(msg_box_win, ACS_S9);
+	}
+	waddch(msg_box_win, ACS_RTEE);
+	// Draw second line
+	waddch(msg_box_win, ACS_VLINE);
+	waddch(msg_box_win, '+');
+	waddch(msg_box_win, ACS_PI);
+	waddch(msg_box_win, ACS_DARROW);
+	waddch(msg_box_win, ACS_DIAMOND);
+	waddch(msg_box_win, ACS_VLINE);
+	const char *typing_msg = "*Apples* is typing";
+	waddstr(msg_box_win, typing_msg);
+	mvwaddch(msg_box_win, 1, CENTER_WIDTH - 3, ACS_VLINE);
+	waddch(msg_box_win, '>' | A_REVERSE);
+	waddch(msg_box_win, ACS_VLINE);
+}
+
+void search_box_draw(void) {
+	search_box_win = newwin(TOP_HEIGHT, LEFT_WIDTH,
+		0, term_props.width - LEFT_WIDTH);
+	// Draw first line
+	waddch(search_box_win, ACS_CKBOARD);
+	waddstr(search_box_win, "Search...");
+	mvwaddch(search_box_win, 0, RIGHT_WIDTH - 1, ACS_CKBOARD);
+	// Draw second line
+	chtype search_box_icons[] = {
+		'A' | A_BOLD,
+		ACS_UARROW | A_BOLD | A_UNDERLINE,
+		ACS_PI | A_BOLD,
+		ACS_BLOCK,
+	};
+	for (int i = 0; i < 4; i++) {
+		waddch(search_box_win, ACS_CKBOARD);
+		waddch(search_box_win, ACS_CKBOARD);
+		waddch(search_box_win, search_box_icons[i]);
+	}
+	int y, x;
+	getyx(search_box_win, y, x);
+	for (int i = x; i < LEFT_WIDTH; i++) {
+		waddch(search_box_win, ACS_CKBOARD);
+	}
+}
+
 int main(void) {
 	setup_term();
 
@@ -358,6 +410,8 @@ int main(void) {
 	tab_bar_draw();
 	msg_area_draw();
 	scroll_bar_draw();
+	msg_box_draw();
+	search_box_draw();
 
 	// Refresh everything
 	refresh();
@@ -365,8 +419,10 @@ int main(void) {
 	wrefresh(channel_win);
 	wrefresh(status_win);
 	wrefresh(tab_win);
-	wrefresh(msg_win);
+	wrefresh(msg_area_win);
 	wrefresh(scroll_bar_win);
+	wrefresh(msg_box_win);
+	wrefresh(search_box_win);
 
 	getch(); // Wait for user input to terminate
 	endwin();
