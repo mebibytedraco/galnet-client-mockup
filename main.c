@@ -13,13 +13,16 @@
 
 // Declare color pair numbers for UI
 enum {
-	COLPAIR_MSG_BG = 1,
+	COLPAIR_DEFAULT = 0,
+	COLPAIR_MSG_BG,
 	COLPAIR_SERVER_INFO,
 	COLPAIR_SERVER_INFO_ONLINE,
 	COLPAIR_SERVER_INFO_OFFLINE,
 	COLPAIR_SERVER_INFO_NUM,
 	COLPAIR_STATUS_BOX,
 	COLPAIR_STATUS_BOX_ICON,
+
+	COLPAIR_TEST_USERNAME,
 };
 
 struct {
@@ -129,6 +132,9 @@ void setup_color(void) {
 			-1, -1);
 		init_pair(COLPAIR_STATUS_BOX_ICON,
 			COLOR_GREEN, -1);
+
+		init_pair(COLPAIR_TEST_USERNAME,
+			COLOR_MAGENTA, -1);
 	} else {
 		term_props.color = false;
 	}
@@ -160,18 +166,6 @@ void try_add_double_hline(WINDOW *win) {
 		wadd_wch(win, WACS_D_HLINE);
 	} else {
 		addch('=');
-	}
-}
-
-void msg_area_draw(void) {
-	msg_win = newwin(CENTER_HEIGHT, CENTER_WIDTH, TOP_HEIGHT, LEFT_WIDTH);
-	// Fill the background of the message area
-	const chtype msg_bg_char = '`' | TRY_COLPAIR(COLPAIR_MSG_BG);
-	for (int i = 0; i < CENTER_HEIGHT; i++) {
-		wmove(msg_win, i, 0);
-		for (int j = 0; j < CENTER_WIDTH; j++) {
-			waddch(msg_win, msg_bg_char);
-		}
 	}
 }
 
@@ -304,6 +298,28 @@ void tab_bar_draw(void) {
 	getyx(tab_win, y, x);
 	mvwaddstr(tab_win, y, CENTER_WIDTH - strlen(channel_desc),
 		channel_desc);
+}
+
+void msg_area_draw(void) {
+	msg_win = newwin(CENTER_HEIGHT, CENTER_WIDTH, TOP_HEIGHT, LEFT_WIDTH);
+	// Fill the background of the message area
+	const chtype msg_bg_char = '`' | TRY_COLPAIR(COLPAIR_MSG_BG);
+	for (int i = 0; i < CENTER_HEIGHT; i++) {
+		wmove(msg_win, i, 0);
+		for (int j = 0; j < CENTER_WIDTH; j++) {
+			waddch(msg_win, msg_bg_char);
+		}
+	}
+	// Write a test message
+	const char *test_username = "Zenith";
+	const char *test_msg = "lol imagine progress happening";
+	try_color_set(msg_win, COLPAIR_TEST_USERNAME, NULL);
+	wattron(msg_win, A_BOLD);
+	mvwaddstr(msg_win, CENTER_HEIGHT - 1, 0, test_username);
+	waddstr(msg_win, ": ");
+	try_color_set(msg_win, COLPAIR_DEFAULT, NULL);
+	wattroff(msg_win, A_BOLD);
+	waddstr(msg_win, test_msg);
 }
 
 int main(void) {
