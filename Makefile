@@ -2,6 +2,8 @@ OBJS = \
 	  main.o \
 
 LDLIBS = -lncursesw
+CFLAGS = -g
+LDFLAGS = -g
 
 all: client-mockup
 
