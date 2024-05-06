@@ -28,7 +28,7 @@ struct {
 	bool utf_8;
 } term_props;
 
-WINDOW *msg_win, *server_info_win, *channel_win, *status_win;
+WINDOW *msg_win, *server_info_win, *channel_win, *status_win, *tab_win;
 
 struct channel {
 	char *name;
@@ -277,6 +277,35 @@ void status_box_draw(void) {
 	waddstr(status_win, "Status lol");
 }
 
+void tab_bar_draw(void) {
+	tab_win = newwin(TOP_HEIGHT, CENTER_WIDTH, 0, LEFT_WIDTH);
+	// Draw tabs
+	const int num_tabs = 2;
+	const int active_tab = 1;
+	for (int i = 0; i < num_tabs; i++) {
+		if (i == active_tab) {
+			wattron(tab_win, A_REVERSE);
+		}
+		waddch(tab_win, ACS_ULCORNER);
+		waddstr(tab_win, "TAB ");
+		waddch(tab_win, '1' + i);
+		waddch(tab_win, ACS_URCORNER);
+		if (i == active_tab) {
+			wattroff(tab_win, A_REVERSE);
+		}
+	}
+	waddch(tab_win, '\n');
+	// Draw channel name
+	const char *channel_name = "Channel name lol";
+	waddstr(tab_win, channel_name);
+	// Draw channel description
+	const char *channel_desc = "Channel Desc.";
+	int y, x;
+	getyx(tab_win, y, x);
+	mvwaddstr(tab_win, y, CENTER_WIDTH - strlen(channel_desc),
+		channel_desc);
+}
+
 int main(void) {
 	setup_term();
 
@@ -284,12 +313,14 @@ int main(void) {
 	channel_list_draw();
 	status_box_draw();
 	msg_area_draw();
+	tab_bar_draw();
 
 	// Refresh everything
 	refresh();
 	wrefresh(server_info_win);
 	wrefresh(channel_win);
 	wrefresh(status_win);
+	wrefresh(tab_win);
 	wrefresh(msg_win);
 
 	getch(); // Wait for user input to terminate
