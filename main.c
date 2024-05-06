@@ -11,6 +11,9 @@
 #define BOTTOM_HEIGHT 2
 #define CENTER_HEIGHT (term_props.height - TOP_HEIGHT - BOTTOM_HEIGHT)
 
+#define MSG_AREA_WIDTH (CENTER_WIDTH - 1)
+#define MSG_AREA_HEIGHT CENTER_HEIGHT
+
 // Declare color pair numbers for UI
 enum {
 	COLPAIR_DEFAULT = 0,
@@ -31,7 +34,8 @@ struct {
 	bool utf_8;
 } term_props;
 
-WINDOW *msg_win, *server_info_win, *channel_win, *status_win, *tab_win;
+WINDOW *msg_win, *scroll_bar_win, *server_info_win, *channel_win, *status_win,
+       *tab_win;
 
 struct channel {
 	char *name;
@@ -165,7 +169,15 @@ void try_add_double_hline(WINDOW *win) {
 	if (term_props.utf_8) {
 		wadd_wch(win, WACS_D_HLINE);
 	} else {
-		addch('=');
+		waddch(win, ACS_HLINE);
+	}
+}
+
+void try_add_double_vline(WINDOW *win) {
+	if (term_props.utf_8) {
+		wadd_wch(win, WACS_D_VLINE);
+	} else {
+		waddch(win, ACS_VLINE);
 	}
 }
 
@@ -301,12 +313,13 @@ void tab_bar_draw(void) {
 }
 
 void msg_area_draw(void) {
-	msg_win = newwin(CENTER_HEIGHT, CENTER_WIDTH, TOP_HEIGHT, LEFT_WIDTH);
+	msg_win = newwin(MSG_AREA_HEIGHT, MSG_AREA_WIDTH,
+		TOP_HEIGHT, LEFT_WIDTH);
 	// Fill the background of the message area
 	const chtype msg_bg_char = '`' | TRY_COLPAIR(COLPAIR_MSG_BG);
-	for (int i = 0; i < CENTER_HEIGHT; i++) {
+	for (int i = 0; i < MSG_AREA_HEIGHT; i++) {
 		wmove(msg_win, i, 0);
-		for (int j = 0; j < CENTER_WIDTH; j++) {
+		for (int j = 0; j < MSG_AREA_WIDTH; j++) {
 			waddch(msg_win, msg_bg_char);
 		}
 	}
@@ -315,11 +328,25 @@ void msg_area_draw(void) {
 	const char *test_msg = "lol imagine progress happening";
 	try_color_set(msg_win, COLPAIR_TEST_USERNAME, NULL);
 	wattron(msg_win, A_BOLD);
-	mvwaddstr(msg_win, CENTER_HEIGHT - 1, 0, test_username);
+	mvwaddstr(msg_win, MSG_AREA_HEIGHT - 1, 0, test_username);
 	waddstr(msg_win, ": ");
 	try_color_set(msg_win, COLPAIR_DEFAULT, NULL);
 	wattroff(msg_win, A_BOLD);
 	waddstr(msg_win, test_msg);
+}
+
+void scroll_bar_draw(void) {
+	scroll_bar_win = newwin(MSG_AREA_HEIGHT, 1, TOP_HEIGHT,
+		LEFT_WIDTH + MSG_AREA_WIDTH);
+	// Draw upper part
+	const int bar_size = 5;
+	for (int i = 0; i < MSG_AREA_HEIGHT - bar_size; i++) {
+		try_add_double_vline(scroll_bar_win);
+	}
+	// Draw lower part
+	for (int i = 0; i < bar_size; i++) {
+		waddch(scroll_bar_win, ' ' | A_REVERSE);
+	}
 }
 
 int main(void) {
@@ -328,8 +355,9 @@ int main(void) {
 	server_info_draw();
 	channel_list_draw();
 	status_box_draw();
-	msg_area_draw();
 	tab_bar_draw();
+	msg_area_draw();
+	scroll_bar_draw();
 
 	// Refresh everything
 	refresh();
@@ -338,6 +366,7 @@ int main(void) {
 	wrefresh(status_win);
 	wrefresh(tab_win);
 	wrefresh(msg_win);
+	wrefresh(scroll_bar_win);
 
 	getch(); // Wait for user input to terminate
 	endwin();
