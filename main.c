@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE 700
 #include <locale.h>
+#include <string.h>
 #include <ncursesw/curses.h>
 
 // Define the sizes of the various border panes
@@ -31,54 +32,61 @@ WINDOW *msg_win, *server_info_win, *channel_win, *status_win;
 
 struct channel {
 	char *name;
+	char *trailing_chars;
 };
 
 struct channel *galnet_dev_cat_channels[] = {
-	&(struct channel) {"dev-main"},
-	&(struct channel) {"dev-backend"},
-	&(struct channel) {"dev-frontend"},
-	&(struct channel) {"dev-design"},
-	&(struct channel) {"dev-ports"},
-	&(struct channel) {"galnet-public"},
+	&(struct channel) {"dev-main", "*"},
+	&(struct channel) {"dev-backend", NULL},
+	&(struct channel) {"dev-frontend", NULL},
+	&(struct channel) {"dev-design", NULL},
+	&(struct channel) {"dev-ports", NULL},
+	&(struct channel) {"galnet-public", NULL},
 };
 
 struct channel *meowmeow_cat_channels[] = {
-	&(struct channel) {"meow"},
-	&(struct channel) {"meowmeow"},
-	&(struct channel) {"meowmeowmeow"},
+	&(struct channel) {"meow", NULL},
+	&(struct channel) {"meowmeow", NULL},
+	&(struct channel) {"meowmeowmeow", NULL},
 };
 
 struct channel *open_salami_cat_channels[] = {
-	&(struct channel) {"hehehehe"},
+	&(struct channel) {"hehehehe", NULL},
 };
 
 struct channel_category {
 	char *name;
+	char *trailing_chars;
 	struct channel **channels;
 	int length;
 	bool opened;
 } galnet_dev_cat = {
 	.name = "GalNet Dev",
+	.trailing_chars = "*+",
 	.channels = galnet_dev_cat_channels,
 	.length = 6,
 	.opened = true,
 }, meowmeow_cat = {
 	.name = "MeowMeow",
+	.trailing_chars = "+",
 	.channels = meowmeow_cat_channels,
 	.length = 3,
 	.opened = true,
 }, closed_cat = {
 	.name = "Closed",
+	.trailing_chars = NULL,
 	.channels = NULL,
 	.length = 0,
 	.opened = false,
 }, also_closed_cat = {
 	.name = "Also closed",
+	.trailing_chars = NULL,
 	.channels = NULL,
 	.length = 0,
 	.opened = false,
 }, open_salami_cat = {
 	.name = "OPEN SALAMI",
+	.trailing_chars = NULL,
 	.channels = open_salami_cat_channels,
 	.length = 1,
 	.opened = true,
@@ -215,7 +223,16 @@ void channel_list_draw(void) {
 		waddch(channel_win, dropdown_char | A_REVERSE);
 		// Write category name
 		waddstr(channel_win, cat->name);
-		waddch(channel_win, '\n');
+		// Write trailing characters
+		if (cat->trailing_chars != NULL) {
+			int x, y;
+			getyx(channel_win, y, x);
+			mvwaddstr(channel_win, y,
+				LEFT_WIDTH - strlen(cat->trailing_chars),
+				cat->trailing_chars);
+		} else {
+			waddch(channel_win, '\n');
+		}
 		if (cat->opened) {
 			for (int j = 0; j < cat->length; j++) {
 				struct channel *channel = cat->channels[j];
