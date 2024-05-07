@@ -25,7 +25,14 @@ enum {
 	COLPAIR_STATUS_BOX,
 	COLPAIR_STATUS_BOX_ICON,
 
-	COLPAIR_TEST_USERNAME,
+	COLPAIR_STATUS_OFFLINE,
+	COLPAIR_STATUS_DO_NOT_DISTURB,
+	COLPAIR_STATUS_IDLE,
+	COLPAIR_STATUS_ONLINE,
+
+	COLPAIR_TEST_USER_PINK,
+	COLPAIR_TEST_USER_PURPLE,
+	COLPAIR_TEST_USER_RED,
 };
 
 struct {
@@ -35,7 +42,11 @@ struct {
 } term_props;
 
 WINDOW *msg_area_win, *scroll_bar_win, *server_info_win, *channel_win,
-       *status_win, *tab_win, *msg_box_win, *search_box_win;
+       *status_win, *tab_win, *msg_box_win, *search_box_win, *user_win;
+
+/*
+ * Channel setup stuff
+ */
 
 struct channel {
 	char *name;
@@ -115,6 +126,71 @@ struct server_channels {
 	.length = 5,
 };
 
+/*
+ * User list setup stuff
+ */
+
+enum user_status {
+	STATUS_OFFLINE,
+	STATUS_DO_NOT_DISTURB,
+	STATUS_IDLE,
+	STATUS_ONLINE,
+};
+
+const short status_colors[] = {
+	COLPAIR_STATUS_OFFLINE,
+	COLPAIR_STATUS_DO_NOT_DISTURB,
+	COLPAIR_STATUS_IDLE,
+	COLPAIR_STATUS_ONLINE,
+};
+
+struct user {
+	char *name;
+	enum user_status status;
+	short color;
+};
+
+struct user *meowmeowmeow_cat_users[] = {
+	&(struct user) {"ashie", STATUS_DO_NOT_DISTURB,
+		COLPAIR_TEST_USER_PINK},
+	&(struct user) {"Zenith", STATUS_ONLINE, COLPAIR_TEST_USER_PINK},
+};
+
+struct user *developers_cat_users[] = {
+	&(struct user) {"Maya", STATUS_ONLINE, COLPAIR_TEST_USER_RED},
+	&(struct user) {"gay", STATUS_IDLE, COLPAIR_TEST_USER_PURPLE},
+	&(struct user) {"*Apples*", STATUS_IDLE, COLPAIR_TEST_USER_PURPLE},
+};
+
+struct user *offline_cat_users[] = {
+	&(struct user) {"Eda", STATUS_OFFLINE, COLPAIR_TEST_USER_PINK},
+	&(struct user) {"ryfox", STATUS_OFFLINE, COLPAIR_TEST_USER_PURPLE},
+};
+
+struct user_category {
+	char *name;
+	struct user **users;
+	int length;
+	short color;
+} meowmeowmeow_cat = {
+	"MEOWMEOWMEOW", meowmeowmeow_cat_users, 2, COLPAIR_TEST_USER_PINK
+}, developers_cat = {
+	"Developers", developers_cat_users, 3, COLPAIR_TEST_USER_PURPLE
+}, offline_cat = {
+	"Offline", offline_cat_users, 2, COLPAIR_DEFAULT
+};
+
+struct user_category *test_users[] = {
+	&meowmeowmeow_cat,
+	&developers_cat,
+	&offline_cat,
+};
+
+struct server_users {
+	struct user_category **cats;
+	int length;
+} user_cats = {test_users, 3};
+
 void setup_color(void) {
 	if (has_colors()) {
 		term_props.color = true;
@@ -137,8 +213,21 @@ void setup_color(void) {
 		init_pair(COLPAIR_STATUS_BOX_ICON,
 			COLOR_GREEN, -1);
 
-		init_pair(COLPAIR_TEST_USERNAME,
+		init_pair(COLPAIR_STATUS_OFFLINE,
+			-1, -1);
+		init_pair(COLPAIR_STATUS_DO_NOT_DISTURB,
+			COLOR_RED, -1);
+		init_pair(COLPAIR_STATUS_IDLE,
+			COLOR_YELLOW, -1);
+		init_pair(COLPAIR_STATUS_ONLINE,
+			COLOR_GREEN, -1);
+
+		init_pair(COLPAIR_TEST_USER_PINK,
 			COLOR_MAGENTA, -1);
+		init_pair(COLPAIR_TEST_USER_PURPLE,
+			COLOR_BLUE, -1);
+		init_pair(COLPAIR_TEST_USER_RED,
+			COLOR_RED, -1);
 	} else {
 		term_props.color = false;
 	}
@@ -326,7 +415,7 @@ void msg_area_draw(void) {
 	// Write a test message
 	const char *test_username = "Zenith";
 	const char *test_msg = "lol imagine progress happening";
-	try_color_set(msg_area_win, COLPAIR_TEST_USERNAME, NULL);
+	try_color_set(msg_area_win, COLPAIR_TEST_USER_PINK, NULL);
 	wattron(msg_area_win, A_BOLD);
 	mvwaddstr(msg_area_win, MSG_AREA_HEIGHT - 1, 0, test_username);
 	waddstr(msg_area_win, ": ");
@@ -401,6 +490,45 @@ void search_box_draw(void) {
 	}
 }
 
+void user_list_draw(void) {
+	user_win = newwin(CENTER_HEIGHT, RIGHT_WIDTH, TOP_HEIGHT,
+		term_props.width - RIGHT_WIDTH);
+	const chtype status_icons[] = {ACS_BULLET, '-', '*', ACS_DIAMOND};
+	for (int i = 0; i < user_cats.length; i++) {
+		struct user_category *cat = user_cats.cats[i];
+		waddch(user_win, ACS_HLINE);
+		// Write category name (in correct color)
+		try_color_set(user_win, cat->color, NULL);
+		wattron(user_win, A_BOLD);
+		waddstr(user_win, cat->name);
+		try_color_set(user_win, COLPAIR_DEFAULT, NULL);
+		wattroff(user_win, A_BOLD);
+		// Draw the line following the category name
+		int y, x;
+		getyx(user_win, y, x);
+		for (int i = x; i < RIGHT_WIDTH; i++) {
+			waddch(user_win, ACS_HLINE);
+		}
+
+		// Write users in category
+		for (int j = 0; j < cat->length; j++) {
+			struct user *user = cat->users[j];
+			// Write status icon
+			waddch(user_win, ' ');
+			waddch(user_win, status_icons[user->status] | A_BOLD
+				| TRY_COLPAIR(status_colors[user->status]));
+			waddch(user_win, ' ');
+			// Write username
+			try_color_set(user_win, user->color, NULL);
+			wattron(user_win, A_BOLD);
+			waddstr(user_win, user->name);
+			try_color_set(user_win, COLPAIR_DEFAULT, NULL);
+			wattroff(user_win, A_BOLD);
+			waddch(user_win, '\n');
+		}
+	}
+}
+
 int main(void) {
 	setup_term();
 
@@ -412,6 +540,7 @@ int main(void) {
 	scroll_bar_draw();
 	msg_box_draw();
 	search_box_draw();
+	user_list_draw();
 
 	// Refresh everything
 	refresh();
@@ -423,6 +552,7 @@ int main(void) {
 	wrefresh(scroll_bar_win);
 	wrefresh(msg_box_win);
 	wrefresh(search_box_win);
+	wrefresh(user_win);
 
 	getch(); // Wait for user input to terminate
 	endwin();
