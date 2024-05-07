@@ -1,6 +1,8 @@
 #define _XOPEN_SOURCE 700
 #include <locale.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 #include <ncursesw/curses.h>
 
 // Define the sizes of the various border panes
@@ -237,12 +239,73 @@ void setup_color(void) {
 	}
 }
 
+void setup_utf_8(void) {
+	// Declare a buffer to store environment variables converted to
+	// lowercase
+	char tmp_var[32];
+	// List of environment variables to check for UTF-8, in order of
+	// precedence
+	const char *env_vars[] = {"LC_ALL", "LC_CTYPE", "LANG"};
+	const int num_env_vars = sizeof(env_vars) / sizeof(char *);
+	// Begin by assuming no UTF-8 support indicated
+	term_props.utf_8 = false;
+	// Check each environment variable, and use it to determine a value for
+	// term_props.utf_8
+	for (int i = 0; i < num_env_vars; i++) {
+		char *env_var = getenv(env_vars[i]);
+		// Only check further if the environment variable has a
+		// non-empty value
+		if (env_var != NULL && strlen(env_var) > 0) {
+			// Copy env_var into tmp_var in lowercase
+			int j;
+			for (j = 0;
+				j < sizeof(tmp_var) - 1 && env_var[j] != '\0';
+				j++) {
+				tmp_var[j] = tolower(env_var[j]);
+			}
+			tmp_var[j] = '\0';
+			// Check for substring of the form "utf8" or "utf?8",
+			// where '?' is any character
+			// TODO: Revise this to make it less awful
+			for (j = 0; tmp_var[j] != 0; j++) {
+				// Check for 'u'
+				if (tmp_var[j] != 'u') {
+					continue;
+				}
+				// Check for 't'
+				if (tmp_var[j + 1] != 't') {
+					continue;
+				}
+				// Check for 'f'
+				if (tmp_var[j + 2] != 'f') {
+					continue;
+				}
+				// Check for either '8' or any non '\0'
+				// character
+				if (tmp_var[j + 3] == '8') {
+					term_props.utf_8 = true;
+					break;
+				} else if (tmp_var[j + 3] == '\0') {
+					continue;
+				}
+				// Check for '8'
+				if (tmp_var[j + 4] == '8') {
+					term_props.utf_8 = true;
+					break;
+				}
+			}
+			// Since we found a non-empty variable, stop searching
+			// here
+			return;
+		}
+	}
+}
+
 void setup_term(void) {
 	setlocale(LC_ALL, ""); // Enables UTF-8 (if present)
 	initscr(); // Start ncurses
 	setup_color(); // Attempts to initialize colors
-
-	term_props.utf_8 = true; // TODO: Guess if terminal has UTF-8
+	setup_utf_8(); // Guess if UTF-8 is supported
 
 	curs_set(0); // Hide the cursor
 
