@@ -24,6 +24,7 @@ enum {
 	COLPAIR_SERVER_INFO_NUM,
 	COLPAIR_STATUS_BOX,
 	COLPAIR_STATUS_BOX_ICON,
+	COLPAIR_CONNECTED,
 
 	COLPAIR_STATUS_OFFLINE,
 	COLPAIR_STATUS_DO_NOT_DISTURB,
@@ -42,7 +43,8 @@ struct {
 } term_props;
 
 WINDOW *msg_area_win, *scroll_bar_win, *server_info_win, *channel_win,
-       *status_win, *tab_win, *msg_box_win, *search_box_win, *user_win;
+       *status_win, *tab_win, *msg_box_win, *search_box_win, *user_win,
+       *connect_win;
 
 /*
  * Channel setup stuff
@@ -211,6 +213,8 @@ void setup_color(void) {
 		init_pair(COLPAIR_STATUS_BOX,
 			-1, -1);
 		init_pair(COLPAIR_STATUS_BOX_ICON,
+			COLOR_GREEN, -1);
+		init_pair(COLPAIR_CONNECTED,
 			COLOR_GREEN, -1);
 
 		init_pair(COLPAIR_STATUS_OFFLINE,
@@ -529,6 +533,33 @@ void user_list_draw(void) {
 	}
 }
 
+void connect_info_draw(void) {
+	connect_win = newwin(BOTTOM_HEIGHT, RIGHT_WIDTH,
+		term_props.height - BOTTOM_HEIGHT,
+		term_props.width - RIGHT_WIDTH);
+	// Draw first line
+	waddch(connect_win, ACS_CKBOARD);
+	try_color_set(connect_win, COLPAIR_CONNECTED, NULL);
+	wattron(connect_win, A_BOLD);
+	waddstr(connect_win, "=Connected!");
+	try_color_set(connect_win, COLPAIR_DEFAULT, NULL);
+	wattroff(connect_win, A_BOLD);
+	int y, x;
+	getyx(connect_win, y, x);
+	for (int i = x; i < RIGHT_WIDTH; i++) {
+		waddch(connect_win, ACS_CKBOARD);
+	}
+	// Draw second line
+	waddch(connect_win, ACS_CKBOARD);
+	waddstr(connect_win, "Serv.er24ms");
+	waddch(connect_win, ACS_CKBOARD);
+	waddch(connect_win, '*');
+	getyx(connect_win, y, x);
+	for (int i = x; i < RIGHT_WIDTH; i++) {
+		waddch(connect_win, ACS_CKBOARD);
+	}
+}
+
 int main(void) {
 	setup_term();
 
@@ -541,6 +572,7 @@ int main(void) {
 	msg_box_draw();
 	search_box_draw();
 	user_list_draw();
+	connect_info_draw();
 
 	// Refresh everything
 	refresh();
@@ -553,6 +585,7 @@ int main(void) {
 	wrefresh(msg_box_win);
 	wrefresh(search_box_win);
 	wrefresh(user_win);
+	wrefresh(connect_win);
 
 	getch(); // Wait for user input to terminate
 	endwin();
