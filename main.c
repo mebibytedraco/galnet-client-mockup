@@ -161,13 +161,14 @@ struct user *meowmeowmeow_cat_users[] = {
 };
 
 struct user *developers_cat_users[] = {
+        &(struct user) {"aquamarine", STATUS_ONLINE, COLPAIR_TEST_USER_PURPLE},
 	&(struct user) {"Maya", STATUS_ONLINE, COLPAIR_TEST_USER_RED},
 	&(struct user) {"gay", STATUS_IDLE, COLPAIR_TEST_USER_PURPLE},
 	&(struct user) {"*Apples*", STATUS_IDLE, COLPAIR_TEST_USER_PURPLE},
 };
 
 struct user *offline_cat_users[] = {
-	&(struct user) {"Eda", STATUS_OFFLINE, COLPAIR_TEST_USER_PINK},
+	&(struct user) {"Rea", STATUS_OFFLINE, COLPAIR_TEST_USER_PINK},
 	&(struct user) {"ryfox", STATUS_OFFLINE, COLPAIR_TEST_USER_PURPLE},
 };
 
@@ -179,7 +180,7 @@ struct user_category {
 } meowmeowmeow_cat = {
 	"MEOWMEOWMEOW", meowmeowmeow_cat_users, 2, COLPAIR_TEST_USER_PINK
 }, developers_cat = {
-	"Developers", developers_cat_users, 3, COLPAIR_TEST_USER_PURPLE
+	"Developers", developers_cat_users, 4, COLPAIR_TEST_USER_PURPLE
 }, offline_cat = {
 	"Offline", offline_cat_users, 2, COLPAIR_DEFAULT
 };
